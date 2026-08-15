@@ -1,0 +1,555 @@
+{
+  "version": 2,
+  "models": {
+    "gpt-4o": {
+      "inputPerMTok": 2.5,
+      "outputPerMTok": 10,
+      "cacheReadPerMTok": 1.25,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-4o-mini": {
+      "inputPerMTok": 0.15,
+      "outputPerMTok": 0.6,
+      "cacheReadPerMTok": 0.075,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-4.1": {
+      "inputPerMTok": 2,
+      "outputPerMTok": 8,
+      "cacheReadPerMTok": 0.5,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-4.1-mini": {
+      "inputPerMTok": 0.4,
+      "outputPerMTok": 1.6,
+      "cacheReadPerMTok": 0.1,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-4.1-nano": {
+      "inputPerMTok": 0.1,
+      "outputPerMTok": 0.4,
+      "cacheReadPerMTok": 0.025,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-4o-2024-05-13": {
+      "inputPerMTok": 5,
+      "outputPerMTok": 15,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03",
+      "notes": "Deprecated early gpt-4o snapshot — predates the current $2.50/$10 gpt-4o pricing."
+    },
+    "gpt-5": {
+      "inputPerMTok": 1.25,
+      "outputPerMTok": 10,
+      "cacheReadPerMTok": 0.125,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5-mini": {
+      "inputPerMTok": 0.25,
+      "outputPerMTok": 2,
+      "cacheReadPerMTok": 0.025,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5-nano": {
+      "inputPerMTok": 0.05,
+      "outputPerMTok": 0.4,
+      "cacheReadPerMTok": 0.005,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5-pro": {
+      "inputPerMTok": 15,
+      "outputPerMTok": 120,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5.1": {
+      "inputPerMTok": 1.25,
+      "outputPerMTok": 10,
+      "cacheReadPerMTok": 0.125,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5.2": {
+      "inputPerMTok": 1.75,
+      "outputPerMTok": 14,
+      "cacheReadPerMTok": 0.175,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5.2-pro": {
+      "inputPerMTok": 21,
+      "outputPerMTok": 168,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5.4": {
+      "inputPerMTok": 2.5,
+      "outputPerMTok": 15,
+      "cacheReadPerMTok": 0.25,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03",
+      "notes": "Recommended production workhorse, 1M context."
+    },
+    "gpt-5.4-mini": {
+      "inputPerMTok": 0.75,
+      "outputPerMTok": 4.5,
+      "cacheReadPerMTok": 0.075,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5.4-nano": {
+      "inputPerMTok": 0.2,
+      "outputPerMTok": 1.25,
+      "cacheReadPerMTok": 0.02,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5.4-pro": {
+      "inputPerMTok": 30,
+      "outputPerMTok": 180,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5.5": {
+      "inputPerMTok": 5,
+      "outputPerMTok": 30,
+      "cacheReadPerMTok": 0.5,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5.5-pro": {
+      "inputPerMTok": 30,
+      "outputPerMTok": 180,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5.6-sol": {
+      "inputPerMTok": 5,
+      "outputPerMTok": 30,
+      "cacheReadPerMTok": 0.5,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03",
+      "notes": "Current flagship — same rate as the default chat-latest alias."
+    },
+    "gpt-5.6-terra": {
+      "inputPerMTok": 2,
+      "outputPerMTok": 12,
+      "cacheReadPerMTok": 0.2,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-5.6-luna": {
+      "inputPerMTok": 0.2,
+      "outputPerMTok": 1.2,
+      "cacheReadPerMTok": 0.02,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03",
+      "notes": "Budget tier of the 5.6 family."
+    },
+    "o1-pro": {
+      "inputPerMTok": 150,
+      "outputPerMTok": 600,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "o3-pro": {
+      "inputPerMTok": 20,
+      "outputPerMTok": 80,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gpt-4-turbo": {
+      "inputPerMTok": 10,
+      "outputPerMTok": 30,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03",
+      "notes": "Predates OpenAI's automatic prompt caching — no cache discount."
+    },
+    "gpt-4": {
+      "inputPerMTok": 30,
+      "outputPerMTok": 60,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03",
+      "notes": "Predates OpenAI's automatic prompt caching — no cache discount."
+    },
+    "gpt-3.5-turbo": {
+      "inputPerMTok": 0.5,
+      "outputPerMTok": 1.5,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03",
+      "notes": "Predates OpenAI's automatic prompt caching — no cache discount."
+    },
+    "o1": {
+      "inputPerMTok": 15,
+      "outputPerMTok": 60,
+      "cacheReadPerMTok": 7.5,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "o1-mini": {
+      "inputPerMTok": 3,
+      "outputPerMTok": 12,
+      "cacheReadPerMTok": 1.5,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "o3": {
+      "inputPerMTok": 2,
+      "outputPerMTok": 8,
+      "cacheReadPerMTok": 0.5,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "o3-mini": {
+      "inputPerMTok": 1.1,
+      "outputPerMTok": 4.4,
+      "cacheReadPerMTok": 0.55,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "o4-mini": {
+      "inputPerMTok": 1.1,
+      "outputPerMTok": 4.4,
+      "cacheReadPerMTok": 0.275,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "claude-opus-5": {
+      "inputPerMTok": 5,
+      "outputPerMTok": 25,
+      "cacheReadPerMTok": 0.5,
+      "cacheWritePerMTok": 6.25,
+      "updatedAt": "2026-08-03",
+      "notes": "Current Opus flagship."
+    },
+    "claude-sonnet-5": {
+      "inputPerMTok": 3,
+      "outputPerMTok": 15,
+      "cacheReadPerMTok": 0.3,
+      "cacheWritePerMTok": 3.75,
+      "updatedAt": "2026-08-03",
+      "notes": "Standard rate. Introductory $2/$10 pricing runs through 2026-08-31."
+    },
+    "claude-fable-5": {
+      "inputPerMTok": 10,
+      "outputPerMTok": 50,
+      "cacheReadPerMTok": 1,
+      "cacheWritePerMTok": 12.5,
+      "updatedAt": "2026-08-03",
+      "notes": "Anthropic's most capable widely released model. Claude Mythos 5 shares this pricing."
+    },
+    "claude-opus-4-8": {
+      "inputPerMTok": 5,
+      "outputPerMTok": 25,
+      "cacheReadPerMTok": 0.5,
+      "cacheWritePerMTok": 6.25,
+      "updatedAt": "2026-08-03",
+      "notes": "Legacy — superseded by Claude Opus 5; still callable."
+    },
+    "claude-opus-4-7": {
+      "inputPerMTok": 5,
+      "outputPerMTok": 25,
+      "cacheReadPerMTok": 0.5,
+      "cacheWritePerMTok": 6.25,
+      "updatedAt": "2026-08-03",
+      "notes": "Legacy — superseded by Claude Opus 5; still callable."
+    },
+    "claude-opus-4-6": {
+      "inputPerMTok": 5,
+      "outputPerMTok": 25,
+      "cacheReadPerMTok": 0.5,
+      "cacheWritePerMTok": 6.25,
+      "updatedAt": "2026-08-03",
+      "notes": "Legacy — superseded by Claude Opus 5; still callable."
+    },
+    "claude-sonnet-4-6": {
+      "inputPerMTok": 3,
+      "outputPerMTok": 15,
+      "cacheReadPerMTok": 0.3,
+      "cacheWritePerMTok": 3.75,
+      "updatedAt": "2026-08-03",
+      "notes": "Legacy — superseded by Claude Sonnet 5; still callable."
+    },
+    "claude-opus-4-5": {
+      "inputPerMTok": 5,
+      "outputPerMTok": 25,
+      "cacheReadPerMTok": 0.5,
+      "cacheWritePerMTok": 6.25,
+      "updatedAt": "2026-08-03",
+      "notes": "Legacy — superseded by Claude Opus 5; still callable."
+    },
+    "claude-sonnet-4-5": {
+      "inputPerMTok": 3,
+      "outputPerMTok": 15,
+      "cacheReadPerMTok": 0.3,
+      "cacheWritePerMTok": 3.75,
+      "updatedAt": "2026-08-03",
+      "notes": "Legacy — superseded by Claude Sonnet 5; still callable."
+    },
+    "claude-haiku-4-5": {
+      "inputPerMTok": 1,
+      "outputPerMTok": 5,
+      "cacheReadPerMTok": 0.1,
+      "cacheWritePerMTok": 1.25,
+      "updatedAt": "2026-08-03"
+    },
+    "claude-opus-4-1": {
+      "inputPerMTok": 15,
+      "outputPerMTok": 75,
+      "cacheReadPerMTok": 1.5,
+      "cacheWritePerMTok": 18.75,
+      "updatedAt": "2026-08-03",
+      "notes": "Deprecated — retires 2026-08-05. Migrate to Claude Opus 5."
+    },
+    "claude-3-7-sonnet-20250219": {
+      "inputPerMTok": 3,
+      "outputPerMTok": 15,
+      "cacheReadPerMTok": 0.3,
+      "cacheWritePerMTok": 3.75,
+      "updatedAt": "2026-08-03",
+      "notes": "Deprecated — superseded by later Sonnet generations."
+    },
+    "claude-3-5-sonnet-20241022": {
+      "inputPerMTok": 3,
+      "outputPerMTok": 15,
+      "cacheReadPerMTok": 0.3,
+      "cacheWritePerMTok": 3.75,
+      "updatedAt": "2026-08-03"
+    },
+    "claude-3-5-haiku-20241022": {
+      "inputPerMTok": 0.8,
+      "outputPerMTok": 4,
+      "cacheReadPerMTok": 0.08,
+      "cacheWritePerMTok": 1,
+      "updatedAt": "2026-08-03"
+    },
+    "claude-3-opus-20240229": {
+      "inputPerMTok": 15,
+      "outputPerMTok": 75,
+      "cacheReadPerMTok": 1.5,
+      "cacheWritePerMTok": 18.75,
+      "updatedAt": "2026-08-03",
+      "notes": "Deprecated — superseded by Claude Opus 4.5."
+    },
+    "claude-3-sonnet-20240229": {
+      "inputPerMTok": 3,
+      "outputPerMTok": 15,
+      "cacheReadPerMTok": 0.3,
+      "cacheWritePerMTok": 3.75,
+      "updatedAt": "2026-08-03",
+      "notes": "Deprecated."
+    },
+    "claude-3-haiku-20240307": {
+      "inputPerMTok": 0.25,
+      "outputPerMTok": 1.25,
+      "cacheReadPerMTok": 0.025,
+      "cacheWritePerMTok": 0.3125,
+      "updatedAt": "2026-08-03",
+      "notes": "Most cost-effective Claude 3 model."
+    },
+    "gemini-2.5-pro": {
+      "inputPerMTok": 1.25,
+      "outputPerMTok": 10,
+      "cacheReadPerMTok": 0.3125,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03",
+      "notes": "Standard tier (prompts <=200k tokens); Google charges a higher rate above that."
+    },
+    "gemini-2.5-flash": {
+      "inputPerMTok": 0.3,
+      "outputPerMTok": 2.5,
+      "cacheReadPerMTok": 0.075,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gemini-2.5-flash-lite": {
+      "inputPerMTok": 0.1,
+      "outputPerMTok": 0.4,
+      "cacheReadPerMTok": 0.025,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gemini-2.0-flash": {
+      "inputPerMTok": 0.1,
+      "outputPerMTok": 0.4,
+      "cacheReadPerMTok": 0.025,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gemini-2.0-flash-lite": {
+      "inputPerMTok": 0.075,
+      "outputPerMTok": 0.3,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gemini-1.5-pro": {
+      "inputPerMTok": 1.25,
+      "outputPerMTok": 5,
+      "cacheReadPerMTok": 0.3125,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gemini-1.5-flash": {
+      "inputPerMTok": 0.075,
+      "outputPerMTok": 0.3,
+      "cacheReadPerMTok": 0.01875,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gemini-1.5-flash-8b": {
+      "inputPerMTok": 0.0375,
+      "outputPerMTok": 0.15,
+      "cacheReadPerMTok": 0.01,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "mistral-large-latest": {
+      "inputPerMTok": 2,
+      "outputPerMTok": 6,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "mistral-medium-latest": {
+      "inputPerMTok": 0.4,
+      "outputPerMTok": 2,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "mistral-small-latest": {
+      "inputPerMTok": 0.2,
+      "outputPerMTok": 0.6,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "ministral-8b-latest": {
+      "inputPerMTok": 0.1,
+      "outputPerMTok": 0.1,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "ministral-3b-latest": {
+      "inputPerMTok": 0.04,
+      "outputPerMTok": 0.04,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "codestral-latest": {
+      "inputPerMTok": 0.3,
+      "outputPerMTok": 0.9,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "pixtral-large-latest": {
+      "inputPerMTok": 2,
+      "outputPerMTok": 6,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "open-mistral-nemo": {
+      "inputPerMTok": 0.15,
+      "outputPerMTok": 0.15,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "llama-3.3-70b-versatile": {
+      "inputPerMTok": 0.59,
+      "outputPerMTok": 0.79,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03",
+      "notes": "Groq-hosted open-weight model."
+    },
+    "llama-3.1-70b-versatile": {
+      "inputPerMTok": 0.59,
+      "outputPerMTok": 0.79,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "llama-3.1-8b-instant": {
+      "inputPerMTok": 0.05,
+      "outputPerMTok": 0.08,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "llama3-70b-8192": {
+      "inputPerMTok": 0.59,
+      "outputPerMTok": 0.79,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "llama3-8b-8192": {
+      "inputPerMTok": 0.05,
+      "outputPerMTok": 0.08,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "mixtral-8x7b-32768": {
+      "inputPerMTok": 0.24,
+      "outputPerMTok": 0.24,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    },
+    "gemma2-9b-it": {
+      "inputPerMTok": 0.2,
+      "outputPerMTok": 0.2,
+      "cacheReadPerMTok": null,
+      "cacheWritePerMTok": null,
+      "updatedAt": "2026-08-03"
+    }
+  },
+  "aliases": {
+    "gpt-4o-2024-08-06": "gpt-4o",
+    "gpt-4o-2024-11-20": "gpt-4o",
+    "gpt-4o-mini-2024-07-18": "gpt-4o-mini",
+    "gpt-4-turbo-2024-04-09": "gpt-4-turbo",
+    "gpt-3.5-turbo-0125": "gpt-3.5-turbo",
+    "o1-2024-12-17": "o1",
+    "o1-mini-2024-09-12": "o1-mini",
+    "chat-latest": "gpt-5.6-sol",
+    "claude-mythos-5": "claude-fable-5",
+    "claude-haiku-4-5-20251001": "claude-haiku-4-5",
+    "claude-sonnet-4-5-20250929": "claude-sonnet-4-5",
+    "claude-opus-4-5-20251101": "claude-opus-4-5",
+    "claude-opus-4-1-20250805": "claude-opus-4-1",
+    "claude-3-5-sonnet-latest": "claude-3-5-sonnet-20241022",
+    "claude-3-5-sonnet-20240620": "claude-3-5-sonnet-20241022",
+    "claude-3-5-haiku-latest": "claude-3-5-haiku-20241022",
+    "claude-3-7-sonnet-latest": "claude-3-7-sonnet-20250219",
+    "mistral-large-2411": "mistral-large-latest",
+    "mistral-small-2409": "mistral-small-latest",
+    "gemini-1.5-pro-latest": "gemini-1.5-pro",
+    "gemini-1.5-flash-latest": "gemini-1.5-flash"
+  }
+}

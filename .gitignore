@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+*.log
+.DS_Store
+
+# Claude Code / assistant working files — not part of the public project
+.claude/
+CLAUDE.md
+**/CLAUDE.md
