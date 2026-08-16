@@ -1,4 +1,5 @@
 import type { BudgetConfig, CostSink, Logger, TokenguardConfig, UnknownModelBehavior } from './types.js';
+import { createRemoteSink } from './sinks/remote.js';
 import { PricingRegistry } from './pricing/registry.js';
 import { ProviderRegistry } from './providers/provider.js';
 import { openaiProvider } from './providers/openai.js';
@@ -42,6 +43,13 @@ export function resolveConfig(config: TokenguardConfig = {}): ResolvedConfig {
   const unknownModel = config.unknownModel ?? 'warn';
   const warned = new Set<string>();
 
+  // A `tokenguardrail: { apiKey, baseUrl }` config auto-installs the remote sink alongside any
+  // explicit sinks, so the platform integration is one option rather than a hand-written onCost.
+  const sinks: CostSink[] = [...(config.sinks ?? [])];
+  if (config.tokenguardrail?.apiKey) {
+    sinks.push(createRemoteSink(config.tokenguardrail, logger));
+  }
+
   return {
     pricing,
     providers,
@@ -50,7 +58,7 @@ export function resolveConfig(config: TokenguardConfig = {}): ResolvedConfig {
     logger,
     budget: config.budget,
     budgetTracker: new BudgetTracker(config.budget),
-    sinks: config.sinks ?? [],
+    sinks,
     warnUnknownModel(model: string) {
       if (unknownModel === 'silent') return;
       if (unknownModel === 'throw') {

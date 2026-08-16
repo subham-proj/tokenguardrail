@@ -187,6 +187,24 @@ export type Logger = Pick<Console, 'warn' | 'error' | 'info'>;
 
 export type UnknownModelBehavior = 'warn' | 'throw' | 'silent';
 
+/**
+ * Configures the built-in remote sink (sinks/remote.ts) that ships CostEvents to a tokenguardrail
+ * server. Setting it via `TokenguardConfig.tokenguardrail` auto-installs the sink — the API key
+ * you get after signing up goes straight "into the wrapper" and events flow to the server.
+ */
+export interface RemoteSinkConfig {
+  /** Account API key (e.g. `tgr_live_...`). Sent as `Authorization: Bearer <apiKey>`. */
+  apiKey: string;
+  /** Server origin, e.g. `https://api.tokenguardrail.com` or `http://localhost:3000`. */
+  baseUrl: string;
+  /** Ingest path appended to `baseUrl`. Default `/v1/ingest`. */
+  ingestPath?: string;
+  /** Extra headers merged onto the request. */
+  headers?: Record<string, string>;
+  /** Injectable fetch implementation (defaults to global `fetch`). Mainly for tests. */
+  fetch?: unknown;
+}
+
 export interface TokenguardConfig {
   /** Merged onto the bundled pricing.json, keyed by exact model id. */
   pricingOverrides?: Record<string, Partial<ModelPrice>>;
@@ -199,6 +217,12 @@ export interface TokenguardConfig {
   budget?: BudgetConfig;
   /** Extra CostEvent sinks, fanned out alongside a wrapper's `onCost` (see sinks/sink.ts). */
   sinks?: CostSink[];
+  /**
+   * Ship events to a tokenguardrail server. When `apiKey` is set, a remote sink is auto-installed
+   * alongside `sinks` (see config.ts / sinks/remote.ts) — the zero-boilerplate way to send cost
+   * data to the platform.
+   */
+  tokenguardrail?: RemoteSinkConfig;
 }
 
 // ============================================================================
