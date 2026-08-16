@@ -207,6 +207,18 @@ export interface RemoteSinkConfig {
   enforceBudget?: boolean;
   /** Budget path appended to `baseUrl`. Default `/v1/budget`. */
   budgetPath?: string;
+  /**
+   * What to do when the budget can't be verified (network error, non-2xx, unparseable body). Since
+   * a guardrail whose limits can't be read is no guardrail, this defaults to `'block'` (fail
+   * closed): the wrapper throws `BudgetUnavailableError` before the call. Set `'allow'` to fail
+   * open — proceed with the call when the budget is unreachable, prioritizing availability.
+   */
+  onUnavailable?: 'block' | 'allow';
+  /**
+   * How long (ms) a fetched budget + spend snapshot is trusted before the wrapper re-fetches it, so
+   * dashboard edits and spend from other processes are picked up. Default `30000` (30s).
+   */
+  budgetTtlMs?: number;
   /** Extra headers merged onto the request. */
   headers?: Record<string, string>;
   /** Injectable fetch implementation (defaults to global `fetch`). Mainly for tests. */

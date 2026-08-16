@@ -27,6 +27,25 @@ export class BudgetExceededError extends Error {
 }
 
 /**
+ * Error thrown when the account's budget cannot be verified (network error, non-2xx, unparseable
+ * body) and `onUnavailable: 'block'` (the default). Distinct from BudgetExceededError: the call is
+ * blocked not because a known cap was hit, but because the guardrail couldn't read the cap at all —
+ * failing closed. Set `onUnavailable: 'allow'` to proceed instead.
+ */
+export class BudgetUnavailableError extends Error {
+  readonly model: string;
+
+  constructor(model: string) {
+    super(
+      `tokenguardrail: could not verify the account budget for "${model}"; blocking the call ` +
+        `(onUnavailable:'block'). Set onUnavailable:'allow' to proceed when the budget is unreachable.`
+    );
+    this.name = 'BudgetUnavailableError';
+    this.model = model;
+  }
+}
+
+/**
  * Holds cumulative spend for one instance or session and answers pre-call budget questions.
  * Lives on the resolved instance (not a module global) so instances stay isolated.
  *

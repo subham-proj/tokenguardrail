@@ -15,8 +15,8 @@ import { createInstanceFromConfig, type TokenguardInstance } from '../instance.j
 import type { ProviderAdapter } from '../providers/provider.js';
 import { heuristicCountTokens } from '../tokens/heuristic.js';
 import { emitCostEvent } from '../sinks/sink.js';
-import { BudgetExceededError, BudgetTracker } from '../budget/budget.js';
-import { fetchRemoteBudget } from '../budget/remote-budget.js';
+import { BudgetExceededError, BudgetUnavailableError, BudgetTracker } from '../budget/budget.js';
+import { fetchRemoteBudget, type RemoteBudget } from '../budget/remote-budget.js';
 import type { TokenguardSession } from '../session/session.js';
 
 export interface TokenguardWrapperOptions extends TokenguardConfig {
@@ -159,38 +159,56 @@ function extractAnthropicDeltaText(chunk: Record<string, unknown>): string {
 // Budget enforcement + cost emission
 // ============================================================================
 
-/**
- * Memoizes the one-time remote-budget load per resolved config, so a wrapped client fetches the
- * server budget at most once (before its first call) regardless of concurrency.
- */
-const remoteBudgetLoads = new WeakMap<ResolvedConfig, Promise<void>>();
+const DEFAULT_BUDGET_TTL_MS = 30_000;
+
+interface BudgetCacheEntry {
+  fetchedAt: number;
+  /** Resolves once the fetch completes AND the tracker has been (re)seeded from its result. */
+  promise: Promise<RemoteBudget>;
+}
 
 /**
- * Load the account's server-configured budget (once) and install it into `resolved.budgetTracker`,
- * seeding it with the spend already recorded on the server so the cumulative cap is enforced
- * against real total spend rather than a fresh per-process counter. No-op when there's no
- * `tokenguardrail.apiKey` or when `enforceBudget` is explicitly false. Fail-open — a failed fetch
- * leaves the (empty) tracker in place.
+ * TTL cache of the remote-budget load per resolved config. Unlike a one-shot snapshot, this lets
+ * dashboard edits and spend from other processes be picked up: once an entry is older than
+ * `budgetTtlMs` the next call re-fetches. Concurrent calls within a window share one in-flight
+ * fetch.
  */
-function ensureRemoteBudget(resolved: ResolvedConfig, options: TokenguardWrapperOptions): Promise<void> {
-  let load = remoteBudgetLoads.get(resolved);
-  if (load) return load;
+const remoteBudgetCache = new WeakMap<ResolvedConfig, BudgetCacheEntry>();
 
+/**
+ * Load the account's server-configured budget and (re)seed `resolved.budgetTracker` from the
+ * server's authoritative spend, so the cumulative cap is enforced against real total spend rather
+ * than a fresh per-process counter. Returns the fetch result so the caller can fail closed on an
+ * error (see onUnavailable).
+ *
+ * Reconciliation: the server value is the source of truth at each refresh — the tracker is rebuilt
+ * with `spentUsd` as its baseline and only accumulates spend recorded locally since then. Because
+ * events are shipped to the server (fire-and-forget) and re-read on the next refresh, local spend
+ * isn't double-counted; any lag is bounded by `budgetTtlMs`. On an `'error'` result the existing
+ * tracker is left untouched (the wrapper decides block/allow via onUnavailable). No fetch happens
+ * when `enforceBudget` is explicitly false.
+ */
+function loadRemoteBudget(resolved: ResolvedConfig, options: TokenguardWrapperOptions): Promise<RemoteBudget> {
   const remote = options.tokenguardrail;
-  const shouldFetch = !!remote?.apiKey && remote.enforceBudget !== false;
-  if (!shouldFetch) {
-    load = Promise.resolve();
-  } else {
-    load = fetchRemoteBudget(remote!, resolved.logger).then(({ budget, spentUsd }) => {
-      if (budget) {
-        resolved.budget = budget;
-        resolved.budgetTracker = new BudgetTracker(budget, spentUsd);
-      }
-    });
+  if (!remote?.apiKey || remote.enforceBudget === false) {
+    return Promise.resolve({ status: 'ok', budget: null, spentUsd: 0 });
   }
 
-  remoteBudgetLoads.set(resolved, load);
-  return load;
+  const ttl = remote.budgetTtlMs ?? DEFAULT_BUDGET_TTL_MS;
+  const now = Date.now();
+  const cached = remoteBudgetCache.get(resolved);
+  if (cached && now - cached.fetchedAt < ttl) return cached.promise;
+
+  const promise = fetchRemoteBudget(remote, resolved.logger).then((result) => {
+    if (result.status === 'ok') {
+      resolved.budget = result.budget ?? undefined;
+      // A null budget (no cap set) installs an empty tracker, so check() allows every call.
+      resolved.budgetTracker = new BudgetTracker(result.budget ?? {}, result.spentUsd);
+    }
+    return result;
+  });
+  remoteBudgetCache.set(resolved, { fetchedAt: now, promise });
+  return promise;
 }
 
 /**
@@ -285,11 +303,15 @@ function createWrappedMethod(
     }
 
     // Budget guardrail — the deliberate throwing path (see enforceBudget). Skipped, fail-open, if
-    // the estimate itself failed above. NOT wrapped in try/catch: a BudgetExceededError must
-    // propagate to the caller before the real call is made. A server-configured budget is fetched
-    // once (fail-open) and installed just before enforcing.
+    // the estimate itself failed above. NOT wrapped in try/catch: a BudgetExceededError /
+    // BudgetUnavailableError must propagate to the caller before the real call is made. The
+    // server-configured budget is (re)fetched on a TTL and installed just before enforcing; if it
+    // can't be verified we fail closed by default (onUnavailable).
     if (estimate) {
-      await ensureRemoteBudget(resolved, options);
+      const remoteBudget = await loadRemoteBudget(resolved, options);
+      if (remoteBudget.status === 'error' && (options.tokenguardrail?.onUnavailable ?? 'block') === 'block') {
+        throw new BudgetUnavailableError(model);
+      }
       enforceBudget(estimate, model, resolved, options.session);
     }
 
@@ -437,6 +459,17 @@ function proxyAtPath(
  * untouched (no cost event).
  */
 export function tokenguard<T extends object>(client: T, options: TokenguardWrapperOptions = {}): T {
+  // The guardrail is inseparable from the account it protects: without an API key there is nothing
+  // to authenticate ingestion or read the budget against, so the wrapper refuses to run rather than
+  // silently passing calls through unguarded. (The pure estimation utilities — estimateCost /
+  // costFromUsage — remain usable without a key; they guard nothing.)
+  if (!options.tokenguardrail?.apiKey) {
+    throw new Error(
+      `tokenguardrail: tokenguard() requires an API key. Pass { tokenguardrail: { apiKey, baseUrl } } ` +
+        `— generate a key in the tokenguardrail dashboard. Without it, budgets cannot be enforced.`
+    );
+  }
+
   const resolved = resolveConfig(options);
   const provider = options.provider ? resolved.providers.require(options.provider) : resolved.providers.detect(client);
 

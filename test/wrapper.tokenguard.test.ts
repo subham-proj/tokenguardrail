@@ -1,7 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
-import { tokenguard } from '../src/wrapper/tokenguard.js';
+import { tokenguard, type TokenguardWrapperOptions } from '../src/wrapper/tokenguard.js';
 import { createTokenguard } from '../src/instance.js';
-import { BudgetExceededError } from '../src/budget/budget.js';
+import { BudgetExceededError, BudgetUnavailableError } from '../src/budget/budget.js';
+
+// tokenguard() now requires an API key, but these tests exercise local behavior (detection, cost
+// tracking, streaming, sessions), not the remote budget. `guard()` injects a minimal remote config
+// with enforcement off and a no-op fetch, so no real network happens and no remote budget is
+// fetched or enforced. Tests that specifically cover the remote budget pass their own tokenguardrail.
+const okFetch = async () => ({ ok: true, status: 200, json: async () => ({}) });
+const REMOTE = { apiKey: 'tgr_live_test', baseUrl: 'http://tg.test', enforceBudget: false, fetch: okFetch };
+function guard<T extends object>(client: T, options: TokenguardWrapperOptions = {}): T {
+  return tokenguard(client, { tokenguardrail: REMOTE, ...options });
+}
 
 function mockOpenAIClient(createImpl: (...args: unknown[]) => unknown) {
   return {
@@ -25,34 +35,34 @@ async function* toAsyncIterable<T>(items: T[]): AsyncGenerator<T> {
   for (const item of items) yield item;
 }
 
-describe('tokenguard() — detection', () => {
+describe('guard() — detection', () => {
   it('wraps a duck-typed OpenAI client', async () => {
     const client = mockOpenAIClient(async () => ({ usage: { prompt_tokens: 10, completion_tokens: 5 } }));
-    const wrapped = tokenguard(client);
+    const wrapped = guard(client);
     const res = await wrapped.chat.completions.create({ model: 'gpt-4o', messages: [] });
     expect(res).toEqual({ usage: { prompt_tokens: 10, completion_tokens: 5 } });
   });
 
   it('wraps a duck-typed Anthropic client', async () => {
     const client = mockAnthropicClient(async () => ({ usage: { input_tokens: 10, output_tokens: 5 } }));
-    const wrapped = tokenguard(client);
+    const wrapped = guard(client);
     const res = await wrapped.messages.create({ model: 'claude-3-5-sonnet-20241022', max_tokens: 100, messages: [] });
     expect(res).toEqual({ usage: { input_tokens: 10, output_tokens: 5 } });
   });
 
   it('throws at setup time for an unrecognized client', () => {
-    expect(() => tokenguard({ somethingElse: true })).toThrow(/could not detect/i);
+    expect(() => guard({ somethingElse: true })).toThrow(/could not detect/i);
   });
 });
 
-describe('tokenguard() — non-streaming cost tracking', () => {
+describe('guard() — non-streaming cost tracking', () => {
   it('emits estimate + actual via onCost without altering the response', async () => {
     const onCost = vi.fn();
     const client = mockOpenAIClient(async () => ({
       choices: [{ message: { content: 'hi' } }],
       usage: { prompt_tokens: 12, completion_tokens: 8, prompt_tokens_details: { cached_tokens: 4 } },
     }));
-    const wrapped = tokenguard(client, { onCost });
+    const wrapped = guard(client, { onCost });
 
     const res = await wrapped.chat.completions.create({
       model: 'gpt-4o',
@@ -70,7 +80,7 @@ describe('tokenguard() — non-streaming cost tracking', () => {
   it('never breaks the underlying call when onCost throws', async () => {
     const onCost = vi.fn().mockRejectedValue(new Error('boom'));
     const client = mockOpenAIClient(async () => ({ usage: { prompt_tokens: 1, completion_tokens: 1 } }));
-    const wrapped = tokenguard(client, { onCost, logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } });
+    const wrapped = guard(client, { onCost, logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } });
 
     await expect(
       wrapped.chat.completions.create({ model: 'gpt-4o', messages: [] })
@@ -81,7 +91,7 @@ describe('tokenguard() — non-streaming cost tracking', () => {
     const client = mockOpenAIClient(async () => {
       throw new Error('upstream 500');
     });
-    const wrapped = tokenguard(client, { onCost: vi.fn() });
+    const wrapped = guard(client, { onCost: vi.fn() });
 
     await expect(
       wrapped.chat.completions.create({ model: 'gpt-4o', messages: [] })
@@ -89,7 +99,7 @@ describe('tokenguard() — non-streaming cost tracking', () => {
   });
 });
 
-describe('tokenguard() — streaming cost tracking', () => {
+describe('guard() — streaming cost tracking', () => {
   it('injects stream_options.include_usage for OpenAI and uses the real final usage', async () => {
     const onCost = vi.fn();
     const received: unknown[] = [];
@@ -101,7 +111,7 @@ describe('tokenguard() — streaming cost tracking', () => {
         { choices: [{ delta: {} }], usage: { prompt_tokens: 10, completion_tokens: 2 } },
       ]);
     });
-    const wrapped = tokenguard(client, { onCost });
+    const wrapped = guard(client, { onCost });
 
     const stream = await wrapped.chat.completions.create({
       model: 'gpt-4o',
@@ -126,7 +136,7 @@ describe('tokenguard() — streaming cost tracking', () => {
       received.push(params);
       return toAsyncIterable([{ choices: [{ delta: {} }] }]);
     });
-    const wrapped = tokenguard(client, { onCost: vi.fn() });
+    const wrapped = guard(client, { onCost: vi.fn() });
 
     const stream = await wrapped.chat.completions.create({
       model: 'gpt-4o',
@@ -149,7 +159,7 @@ describe('tokenguard() — streaming cost tracking', () => {
         { choices: [{ delta: {} }] }, // no usage on this chunk — caller opted out
       ])
     );
-    const wrapped = tokenguard(client, { onCost });
+    const wrapped = guard(client, { onCost });
 
     const stream = await wrapped.chat.completions.create({
       model: 'gpt-4o',
@@ -176,7 +186,7 @@ describe('tokenguard() — streaming cost tracking', () => {
         { type: 'message_delta', usage: { output_tokens: 7 } },
       ])
     );
-    const wrapped = tokenguard(client, { onCost });
+    const wrapped = guard(client, { onCost });
 
     const stream = await wrapped.messages.create({
       model: 'claude-3-5-sonnet-20241022',
@@ -203,7 +213,7 @@ describe('tokenguard() — streaming cost tracking', () => {
         { choices: [{ delta: {} }], usage: { prompt_tokens: 1, completion_tokens: 1 } },
       ])
     );
-    const wrapped = tokenguard(client, { onCost, logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } });
+    const wrapped = guard(client, { onCost, logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } });
 
     const stream = await wrapped.chat.completions.create({ model: 'gpt-4o', stream: true, messages: [] });
     const chunks: unknown[] = [];
@@ -214,11 +224,11 @@ describe('tokenguard() — streaming cost tracking', () => {
   });
 });
 
-describe('tokenguard() — provider hint (Groq / OpenAI-compatible)', () => {
+describe('guard() — provider hint (Groq / OpenAI-compatible)', () => {
   it('attributes cost to Groq when { provider: "groq" } is passed to an OpenAI-shaped client', async () => {
     const onCost = vi.fn();
     const client = mockOpenAIClient(async () => ({ usage: { prompt_tokens: 100, completion_tokens: 50 } }));
-    const wrapped = tokenguard(client, { provider: 'groq', onCost });
+    const wrapped = guard(client, { provider: 'groq', onCost });
 
     await wrapped.chat.completions.create({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: 'hi' }] });
 
@@ -231,19 +241,19 @@ describe('tokenguard() — provider hint (Groq / OpenAI-compatible)', () => {
   it('defaults an OpenAI-shaped client to OpenAI without a hint', async () => {
     const onCost = vi.fn();
     const client = mockOpenAIClient(async () => ({ usage: { prompt_tokens: 1, completion_tokens: 1 } }));
-    const wrapped = tokenguard(client, { onCost });
+    const wrapped = guard(client, { onCost });
     await wrapped.chat.completions.create({ model: 'gpt-4o', messages: [] });
     expect(onCost.mock.calls[0][0].provider).toBe('openai');
   });
 });
 
-describe('tokenguard() — session attribution', () => {
+describe('guard() — session attribution', () => {
   it('folds each wrapped call into the session and stamps sessionId on the event', async () => {
     const onCost = vi.fn();
     const tg = createTokenguard();
     const session = tg.session();
     const client = mockOpenAIClient(async () => ({ usage: { prompt_tokens: 100, completion_tokens: 50 } }));
-    const wrapped = tokenguard(client, { session, onCost });
+    const wrapped = guard(client, { session, onCost });
 
     await wrapped.chat.completions.create({ model: 'gpt-4o', messages: [{ role: 'user', content: 'hi' }] });
     await wrapped.chat.completions.create({ model: 'gpt-4o', messages: [{ role: 'user', content: 'again' }] });
@@ -260,11 +270,52 @@ describe('tokenguard() — session attribution', () => {
     const create = vi.fn(async () => ({ usage: { prompt_tokens: 0, completion_tokens: 200_000 } }));
     const tg = createTokenguard();
     const session = tg.session({ maxTotalCostUsd: 3 });
-    const wrapped = tokenguard(mockOpenAIClient(create), { session });
+    const wrapped = guard(mockOpenAIClient(create), { session });
     const params = { model: 'gpt-4o', max_tokens: 200_000, messages: [] };
 
     await wrapped.chat.completions.create(params); // estimate $2 < $3 → allowed; records ~$2 actual
     await expect(wrapped.chat.completions.create(params)).rejects.toBeInstanceOf(BudgetExceededError); // 2 + 2 > 3
     expect(create).toHaveBeenCalledTimes(1); // second call blocked before firing
+  });
+});
+
+describe('tokenguard() — API key requirement', () => {
+  it('throws at wrap time when no API key is provided (does not run unguarded)', () => {
+    const client = mockOpenAIClient(async () => ({ usage: { prompt_tokens: 1, completion_tokens: 1 } }));
+    expect(() => tokenguard(client)).toThrow(/requires an API key/i);
+    expect(() => tokenguard(client, { provider: 'openai' })).toThrow(/requires an API key/i);
+  });
+
+  it('wraps normally once an API key is provided', () => {
+    const client = mockOpenAIClient(async () => ({ usage: { prompt_tokens: 1, completion_tokens: 1 } }));
+    expect(() => tokenguard(client, { tokenguardrail: REMOTE })).not.toThrow();
+  });
+});
+
+describe('tokenguard() — budget unavailable (fail closed by default)', () => {
+  const errFetch = async () => ({ ok: false, status: 500, json: async () => ({}) });
+
+  it('blocks the call before it fires when the budget cannot be verified', async () => {
+    const create = vi.fn(async () => ({ usage: { prompt_tokens: 1, completion_tokens: 1 } }));
+    const wrapped = tokenguard(mockOpenAIClient(create), {
+      tokenguardrail: { apiKey: 'tgr_live_test', baseUrl: 'http://tg.test', fetch: errFetch },
+      logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+    });
+
+    await expect(
+      wrapped.chat.completions.create({ model: 'gpt-4o', messages: [{ role: 'user', content: 'hi' }] })
+    ).rejects.toBeInstanceOf(BudgetUnavailableError);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('allows the call when onUnavailable is "allow"', async () => {
+    const create = vi.fn(async () => ({ usage: { prompt_tokens: 1, completion_tokens: 1 } }));
+    const wrapped = tokenguard(mockOpenAIClient(create), {
+      tokenguardrail: { apiKey: 'tgr_live_test', baseUrl: 'http://tg.test', fetch: errFetch, onUnavailable: 'allow' },
+      logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+    });
+
+    await wrapped.chat.completions.create({ model: 'gpt-4o', messages: [{ role: 'user', content: 'hi' }] });
+    expect(create).toHaveBeenCalledTimes(1);
   });
 });
