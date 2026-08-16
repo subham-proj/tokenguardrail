@@ -15,7 +15,8 @@ import { createInstanceFromConfig, type TokenguardInstance } from '../instance.j
 import type { ProviderAdapter } from '../providers/provider.js';
 import { heuristicCountTokens } from '../tokens/heuristic.js';
 import { emitCostEvent } from '../sinks/sink.js';
-import { BudgetExceededError, type BudgetTracker } from '../budget/budget.js';
+import { BudgetExceededError, BudgetTracker } from '../budget/budget.js';
+import { fetchRemoteBudget } from '../budget/remote-budget.js';
 import type { TokenguardSession } from '../session/session.js';
 
 export interface TokenguardWrapperOptions extends TokenguardConfig {
@@ -159,6 +160,40 @@ function extractAnthropicDeltaText(chunk: Record<string, unknown>): string {
 // ============================================================================
 
 /**
+ * Memoizes the one-time remote-budget load per resolved config, so a wrapped client fetches the
+ * server budget at most once (before its first call) regardless of concurrency.
+ */
+const remoteBudgetLoads = new WeakMap<ResolvedConfig, Promise<void>>();
+
+/**
+ * Load the account's server-configured budget (once) and install it into `resolved.budgetTracker`,
+ * seeding it with the spend already recorded on the server so the cumulative cap is enforced
+ * against real total spend rather than a fresh per-process counter. No-op when there's no
+ * `tokenguardrail.apiKey` or when `enforceBudget` is explicitly false. Fail-open — a failed fetch
+ * leaves the (empty) tracker in place.
+ */
+function ensureRemoteBudget(resolved: ResolvedConfig, options: TokenguardWrapperOptions): Promise<void> {
+  let load = remoteBudgetLoads.get(resolved);
+  if (load) return load;
+
+  const remote = options.tokenguardrail;
+  const shouldFetch = !!remote?.apiKey && remote.enforceBudget !== false;
+  if (!shouldFetch) {
+    load = Promise.resolve();
+  } else {
+    load = fetchRemoteBudget(remote!, resolved.logger).then(({ budget, spentUsd }) => {
+      if (budget) {
+        resolved.budget = budget;
+        resolved.budgetTracker = new BudgetTracker(budget, spentUsd);
+      }
+    });
+  }
+
+  remoteBudgetLoads.set(resolved, load);
+  return load;
+}
+
+/**
  * The ONE place the wrapper is allowed to break the call. Checks the instance budget (and the
  * session budget, if any) against the pre-call estimate. On 'exceed' with onExceeded:'throw'
  * (the default) a BudgetExceededError propagates to the caller *before* the real API call — that
@@ -251,8 +286,10 @@ function createWrappedMethod(
 
     // Budget guardrail — the deliberate throwing path (see enforceBudget). Skipped, fail-open, if
     // the estimate itself failed above. NOT wrapped in try/catch: a BudgetExceededError must
-    // propagate to the caller before the real call is made.
+    // propagate to the caller before the real call is made. A server-configured budget is fetched
+    // once (fail-open) and installed just before enforcing.
     if (estimate) {
+      await ensureRemoteBudget(resolved, options);
       enforceBudget(estimate, model, resolved, options.session);
     }
 
