@@ -14,6 +14,14 @@ const DEFAULT_BUDGET_PATH = '/v1/budget';
 
 /** The account's server-side budget plus the spend already recorded for it. */
 export interface RemoteBudget {
+  /**
+   * Whether the budget was successfully read. `'ok'` means the server answered (a null `budget`
+   * then means "no cap set", which is a valid answer). `'error'` means it could not be read
+   * (missing config, no fetch impl, network error, non-2xx, or unparseable body) — the wrapper
+   * uses this to decide whether to fail closed. Distinguishing the two is why this isn't collapsed
+   * into `budget: null`.
+   */
+  status: 'ok' | 'error';
   /** The configured cap, or null when none is set. */
   budget: BudgetConfig | null;
   /** Actual cost accumulated so far (USD) — seeds the cumulative tracker. */
@@ -31,20 +39,21 @@ function joinUrl(baseUrl: string, path: string): string {
  * locally-passed `budget`.
  *
  * `GET {baseUrl}{budgetPath}` with `Authorization: Bearer {apiKey}`; reads the `{ budget, spentUsd }`
- * envelope. **Fail-open**: any missing config, network error, non-2xx, or unparseable body yields
- * `{ budget: null, spentUsd: 0 }` — a budget-service hiccup must never break a call (nor silently
- * block it).
+ * envelope. Reports `status: 'ok'` on a 2xx (a null `budget` is a valid "no cap set" answer) and
+ * `status: 'error'` on missing config, no fetch impl, network error, non-2xx, or unparseable body.
+ * This function never throws or blocks; the wrapper decides what an `'error'` means (fail closed by
+ * default via `onUnavailable`).
  */
 export async function fetchRemoteBudget(
   config: RemoteSinkConfig,
   logger: Logger = console
 ): Promise<RemoteBudget> {
-  const empty: RemoteBudget = { budget: null, spentUsd: 0 };
-  if (!config?.apiKey || !config?.baseUrl) return empty;
+  const errored: RemoteBudget = { status: 'error', budget: null, spentUsd: 0 };
+  if (!config?.apiKey || !config?.baseUrl) return errored;
 
   const url = joinUrl(config.baseUrl, config.budgetPath ?? DEFAULT_BUDGET_PATH);
   const doFetch = (config.fetch as FetchLike | undefined) ?? (globalThis.fetch as FetchLike | undefined);
-  if (!doFetch) return empty;
+  if (!doFetch) return errored;
 
   try {
     const res = await doFetch(url, {
@@ -52,13 +61,13 @@ export async function fetchRemoteBudget(
       headers: { authorization: `Bearer ${config.apiKey}` },
     });
     if (!res.ok) {
-      logger.warn(`tokenguardrail: budget fetch got HTTP ${res.status} from ${url} (continuing without a remote budget)`);
-      return empty;
+      logger.warn(`tokenguardrail: budget fetch got HTTP ${res.status} from ${url}`);
+      return errored;
     }
     const body = (res.json ? await res.json() : null) as { budget?: BudgetConfig | null; spentUsd?: number } | null;
-    return { budget: body?.budget ?? null, spentUsd: Number(body?.spentUsd) || 0 };
+    return { status: 'ok', budget: body?.budget ?? null, spentUsd: Number(body?.spentUsd) || 0 };
   } catch (err) {
-    logger.warn(`tokenguardrail: budget fetch failed for ${url} (continuing without a remote budget): ${errMessage(err)}`);
-    return empty;
+    logger.warn(`tokenguardrail: budget fetch failed for ${url}: ${errMessage(err)}`);
+    return errored;
   }
 }
