@@ -199,6 +199,14 @@ export interface RemoteSinkConfig {
   baseUrl: string;
   /** Ingest path appended to `baseUrl`. Default `/v1/ingest`. */
   ingestPath?: string;
+  /**
+   * Fetch the account's server-configured budget and enforce it before each call — the wrapper
+   * blocks a call once projected cumulative spend would exceed the cap. Default `true`; set
+   * `false` to send cost events without enforcing a budget.
+   */
+  enforceBudget?: boolean;
+  /** Budget path appended to `baseUrl`. Default `/v1/budget`. */
+  budgetPath?: string;
   /** Extra headers merged onto the request. */
   headers?: Record<string, string>;
   /** Injectable fetch implementation (defaults to global `fetch`). Mainly for tests. */
@@ -213,14 +221,14 @@ export interface TokenguardConfig {
   /** Behavior when a model has no pricing entry at all. Default 'warn' (log-once). */
   unknownModel?: UnknownModelBehavior;
   logger?: Logger;
-  /** Pre-call spend guardrail. Enforced by the tokenguard() wrapper (see wrapper/tokenguard.ts). */
-  budget?: BudgetConfig;
   /** Extra CostEvent sinks, fanned out alongside a wrapper's `onCost` (see sinks/sink.ts). */
   sinks?: CostSink[];
   /**
-   * Ship events to a tokenguardrail server. When `apiKey` is set, a remote sink is auto-installed
-   * alongside `sinks` (see config.ts / sinks/remote.ts) — the zero-boilerplate way to send cost
-   * data to the platform.
+   * Connect to a tokenguardrail server. When `apiKey` is set, the wrapper (a) auto-installs a
+   * remote sink that ships every cost event to `POST {baseUrl}/v1/ingest`, and (b) fetches your
+   * account's spend budget and enforces it before each call (see config.ts / sinks/remote.ts /
+   * budget/remote-budget.ts). This is the only way to configure a budget — budgets live on the
+   * server, not in code.
    */
   tokenguardrail?: RemoteSinkConfig;
 }

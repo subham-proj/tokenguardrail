@@ -214,38 +214,6 @@ describe('tokenguard() — streaming cost tracking', () => {
   });
 });
 
-describe('tokenguard() — budget enforcement', () => {
-  it('throws BudgetExceededError BEFORE calling the client when the estimate exceeds a per-call cap', async () => {
-    const create = vi.fn(async () => ({ usage: { prompt_tokens: 1, completion_tokens: 1 } }));
-    const wrapped = tokenguard(mockOpenAIClient(create), { budget: { maxCostPerCallUsd: 1e-9 } });
-
-    await expect(
-      wrapped.chat.completions.create({ model: 'gpt-4o', messages: [{ role: 'user', content: 'hi' }] })
-    ).rejects.toBeInstanceOf(BudgetExceededError);
-    expect(create).not.toHaveBeenCalled(); // the guardrail blocked the real call
-  });
-
-  it('warns and proceeds (call happens) when onExceeded is "warn"', async () => {
-    const warn = vi.fn();
-    const create = vi.fn(async () => ({ usage: { prompt_tokens: 1, completion_tokens: 1 } }));
-    const wrapped = tokenguard(mockOpenAIClient(create), {
-      budget: { maxCostPerCallUsd: 1e-9, onExceeded: 'warn' },
-      logger: { warn, error: vi.fn(), info: vi.fn() },
-    });
-
-    await expect(wrapped.chat.completions.create({ model: 'gpt-4o', messages: [] })).resolves.toBeDefined();
-    expect(create).toHaveBeenCalledTimes(1);
-    expect(warn).toHaveBeenCalled();
-  });
-
-  it('allows a call comfortably under budget', async () => {
-    const create = vi.fn(async () => ({ usage: { prompt_tokens: 10, completion_tokens: 5 } }));
-    const wrapped = tokenguard(mockOpenAIClient(create), { budget: { maxCostPerCallUsd: 100, maxTotalCostUsd: 100 } });
-    await expect(wrapped.chat.completions.create({ model: 'gpt-4o', messages: [] })).resolves.toBeDefined();
-    expect(create).toHaveBeenCalledTimes(1);
-  });
-});
-
 describe('tokenguard() — provider hint (Groq / OpenAI-compatible)', () => {
   it('attributes cost to Groq when { provider: "groq" } is passed to an OpenAI-shaped client', async () => {
     const onCost = vi.fn();

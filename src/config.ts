@@ -56,8 +56,10 @@ export function resolveConfig(config: TokenguardConfig = {}): ResolvedConfig {
     defaultMaxOutputTokens: config.defaultMaxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
     unknownModel,
     logger,
-    budget: config.budget,
-    budgetTracker: new BudgetTracker(config.budget),
+    // Budgets are server-side: the wrapper installs the real tracker after fetching the account
+    // budget (see wrapper/tokenguard.ts ensureRemoteBudget). Until then it's an empty (no-op) one.
+    budget: undefined,
+    budgetTracker: new BudgetTracker(),
     sinks,
     warnUnknownModel(model: string) {
       if (unknownModel === 'silent') return;

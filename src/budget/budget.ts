@@ -35,11 +35,18 @@ export class BudgetExceededError extends Error {
  * is the only mutator; it folds a completed call's actual cost into cumulative spend.
  */
 export class BudgetTracker {
-  private spentUsd = 0;
+  private spentUsd: number;
   private callCount = 0;
 
-  /** Public so the wrapper can read enforcement policy (onExceeded / onWarning). */
-  constructor(readonly config: BudgetConfig = {}) {}
+  /**
+   * @param config      Enforcement policy (public so the wrapper can read onExceeded / onWarning).
+   * @param initialSpentUsd Spend already accumulated elsewhere (e.g. fetched from the server) so a
+   *   cumulative cap is enforced against real total spend, not just this process. Does not count as
+   *   a completed call.
+   */
+  constructor(readonly config: BudgetConfig = {}, initialSpentUsd = 0) {
+    this.spentUsd = initialSpentUsd > 0 ? initialSpentUsd : 0;
+  }
 
   /** Pre-call decision from an estimate. Does not mutate state. */
   check(estimatedCostUsd: number, _model?: string): BudgetDecision {
