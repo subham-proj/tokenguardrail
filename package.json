@@ -1,14 +1,14 @@
 {
   "name": "tokenguardrail",
-  "version": "1.1.0",
+  "version": "1.1.3",
   "description": "Know the cost of your LLM calls before and after you send them — with cache-aware pricing, budget guardrails, sessions, and pluggable sinks. Works with OpenAI, Anthropic, Google/Gemini, Mistral, and Groq.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/subham-proj/tokenguardrail.git"
+    "url": "git+https://github.com/tokenguardrail/SDK.git"
   },
-  "homepage": "https://github.com/subham-proj/tokenguardrail#readme",
+  "homepage": "https://github.com/tokenguardrail/SDK#readme",
   "bugs": {
-    "url": "https://github.com/subham-proj/tokenguardrail/issues"
+    "url": "https://github.com/tokenguardrail/SDK/issues"
   },
   "keywords": [
     "llm",
